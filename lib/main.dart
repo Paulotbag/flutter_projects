@@ -1,22 +1,29 @@
-import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'Repository.dart';
+import 'ProfilePage.dart';
+import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      routes: {
+        '/profile': (context) => ProfilePage(),
+        '/myHomePage': (context) => MyHomePage(title: 'Flutter Demo')
+      },
+      initialRoute: '/',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Flutter Demo'),
     );
   }
 }
@@ -42,7 +49,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _controller = TextEditingController();
     _controller1 = TextEditingController();
     storedData = EncryptedSharedPreferences();
-
     _loadSavedCredentials();
   }
 
@@ -58,12 +64,11 @@ class _MyHomePageState extends State<MyHomePage> {
           content: Text('Previous login name and password loaded'),
           action: SnackBarAction(
             label: 'Clear Saved Data',
-            onPressed: (){
+            onPressed: () {
               storedData.remove("username");
               storedData.remove("password");
               _controller.text = "";
               _controller1.text = "";
-
             },
           ),
         ),
@@ -84,6 +89,10 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         imageSource = "images/idea.png"; // Change image to light bulb
       });
+      Navigator.pushNamed(context, '/profile');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Welcome Back ${_controller.text}')),
+      );
     } else {
       setState(() {
         imageSource = "images/stop.png"; // Change image to stop sign
@@ -95,31 +104,28 @@ class _MyHomePageState extends State<MyHomePage> {
   void _showSaveDialog() {
     showDialog<String>(
       context: context,
-      builder: (BuildContext context) =>
-          AlertDialog(
-            title: const Text('Save Credentials'),
-            content: const Text(
-                'Would you like to save your username and password for the next time?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  _saveCredentials();
-                  Navigator.pop(context);
-                },
-                child: const Text('Yes'),
-              ),
-              TextButton(
-                onPressed: () {
-                  storedData.remove("username");
-                  storedData.remove("password");
-                  _controller.text = "";
-                  _controller1.text = "";
-                  Navigator.pop(context);
-                },
-                child: const Text('No'),
-              ),
-            ],
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Save Credentials'),
+        content: const Text(
+            'Would you like to save your username and password for the next time?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              _saveCredentials();
+              Navigator.pop(context);
+            },
+            child: const Text('Yes'),
           ),
+          TextButton(
+            onPressed: () {
+              storedData.remove("username");
+              storedData.remove("password");
+              Navigator.pop(context);
+            },
+            child: const Text('No'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -146,8 +152,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 border: OutlineInputBorder(),
                 labelText: "Login",
               ),
-              obscureText: true,
+              obscureText: false,
             ),
+            SizedBox(height: 16),
             TextField(
               controller: _controller1,
               decoration: InputDecoration(
@@ -157,6 +164,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               obscureText: true,
             ),
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: buttonClicked,
               child: Text("Login"),
@@ -165,10 +173,12 @@ class _MyHomePageState extends State<MyHomePage> {
               imageSource,
               width: 150,
               height: 150,
-            )
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+
