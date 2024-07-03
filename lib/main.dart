@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'Repository.dart';
-import 'ProfilePage.dart';
-import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,17 +10,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      routes: {
-        '/profile': (context) => ProfilePage(),
-        '/myHomePage': (context) => MyHomePage(title: 'Flutter Demo')
-      },
-      initialRoute: '/',
+      title: 'To Do List',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo'),
+      home: const MyHomePage(title: 'To Do List'),
     );
   }
 }
@@ -39,87 +31,51 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late TextEditingController _controller;
-  late TextEditingController _controller1;
-  String imageSource = "images/question-mark.png"; // Default image source
-  late EncryptedSharedPreferences storedData;
+  List<String> toDoList = [];
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _controller1 = TextEditingController();
-    storedData = EncryptedSharedPreferences();
-    _loadSavedCredentials();
-  }
-
-  Future<void> _loadSavedCredentials() async {
-    final savedUsername = await storedData.getString("username");
-    final savedPassword = await storedData.getString("password");
-
-    if (savedUsername != null && savedPassword != null) {
-      _controller.text = savedUsername;
-      _controller1.text = savedPassword;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Previous login name and password loaded'),
-          action: SnackBarAction(
-            label: 'Clear Saved Data',
-            onPressed: () {
-              storedData.remove("username");
-              storedData.remove("password");
-              _controller.text = "";
-              _controller1.text = "";
-            },
-          ),
-        ),
-      );
-    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _controller1.dispose();
     super.dispose();
   }
 
-  void buttonClicked() {
-    String password = _controller1.text.trim();
-    if (password == "QWERTY123") {
-      setState(() {
-        imageSource = "images/idea.png"; // Change image to light bulb
-      });
-      Navigator.pushNamed(context, '/profile');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Welcome Back ${_controller.text}')),
-      );
-    } else {
-      setState(() {
-        imageSource = "images/stop.png"; // Change image to stop sign
-      });
-    }
-    _showSaveDialog();
+  void _addToDoItem() {
+    setState(() {
+      if (_controller.text.isNotEmpty) {
+        toDoList.add(_controller.text);
+        _controller.clear();
+      }
+    });
   }
 
-  void _showSaveDialog() {
+  void _removeToDoItem(int index) {
+    setState(() {
+      toDoList.removeAt(index);
+    });
+  }
+
+  void _showDeleteDialog(int index) {
     showDialog<String>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Save Credentials'),
-        content: const Text(
-            'Would you like to save your username and password for the next time?'),
+        title: const Text('Delete To Do Item'),
+        content: const Text('Are you sure you want to delete this item?'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              _saveCredentials();
+              _removeToDoItem(index);
               Navigator.pop(context);
             },
             child: const Text('Yes'),
           ),
           TextButton(
             onPressed: () {
-              storedData.remove("username");
-              storedData.remove("password");
               Navigator.pop(context);
             },
             child: const Text('No'),
@@ -129,11 +85,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> _saveCredentials() async {
-    await storedData.setString("username", _controller.text);
-    await storedData.setString("password", _controller1.text);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,41 +92,58 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.secondary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: "Type here",
-                border: OutlineInputBorder(),
-                labelText: "Login",
-              ),
-              obscureText: false,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: _addToDoItem,
+                  child: const Text("Add"),
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        hintText: "Enter a todo item",
+                        border: OutlineInputBorder(),
+                        //labelText: "To Do",
+                        ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _controller1,
-              decoration: InputDecoration(
-                hintText: "Type here",
-                border: OutlineInputBorder(),
-                labelText: "Password",
-              ),
-              obscureText: true,
+          ),
+          Expanded(
+            child: toDoList.isEmpty ?
+            const Center(
+              child: Text("There are no items in the list"),
+            )
+                :ListView.builder(
+                  itemCount: toDoList.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onLongPress: () => _showDeleteDialog(index),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Text("Row number: $index"),
+                            Text(toDoList[index]),
+                          ],
+                        ),
+                      ),
+                    );
+                    },
             ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: buttonClicked,
-              child: Text("Login"),
-            ),
-            Image.asset(
-              imageSource,
-              width: 150,
-              height: 150,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
