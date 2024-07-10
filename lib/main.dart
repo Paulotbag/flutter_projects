@@ -1,5 +1,10 @@
-//code for lab 6
+//code for lab 8
 import 'package:flutter/material.dart';
+import 'package:test_flutter/ToDoDatabase.dart';
+
+
+import 'ToDoDAO.dart';
+import 'ToDoItem.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,12 +37,27 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late TextEditingController _controller;
-  List<String> toDoList = [];
+  late ToDoDAO myDAO;
+  List<ToDoItem> toDoList = []; //the list of String in our ToDopage became list of ToDoItem
+
+
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
+    initializeDatabase();
+  }
+
+  Future<void> initializeDatabase() async {
+    final database = await $FloorToDoDatabase.databaseBuilder('myDatabaseFile.db').build();
+    myDAO = database.getDAO; // Initialize myDAO once database is ready
+
+    // Retrieve all items from the database
+    final listOfAllItems = await myDAO.getAllToDoItems();
+    setState(() {
+      toDoList.addAll(listOfAllItems);
+    });
   }
 
   @override
@@ -48,16 +68,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _addToDoItem() {
     setState(() {
+      var newItem = ToDoItem(ToDoItem.ID++, _controller.text);
       if (_controller.text.isNotEmpty) {
-        toDoList.add(_controller.text);
+        toDoList.add(newItem);
         _controller.clear();
       }
+      myDAO.insertToDo(newItem).then((_) {
+
+      });
     });
   }
 
   void _removeToDoItem(int index) {
     setState(() {
+      //also delete from DAO
+      myDAO.deleteToDo(toDoList[index]);
+
+      //delete from list variable
       toDoList.removeAt(index);
+
+
     });
   }
 
@@ -101,8 +131,8 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                  onPressed: _addToDoItem,
                   child: const Text("Add"),
+                  onPressed: _addToDoItem,
                 ),
                 Flexible(
                   child: Padding(
@@ -112,8 +142,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       decoration: const InputDecoration(
                         hintText: "Enter a todo item",
                         border: OutlineInputBorder(),
-                        //labelText: "To Do",
-                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -126,22 +155,22 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Text("There are no items in the list"),
             )
                 :ListView.builder(
-                  itemCount: toDoList.length,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onLongPress: () => _showDeleteDialog(index),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Text("Row number: $index"),
-                            Text(toDoList[index]),
-                          ],
-                        ),
-                      ),
-                    );
-                    },
+              itemCount: toDoList.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onLongPress: () => _showDeleteDialog(index),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Text("Row number: ${toDoList[index].id}"),
+                        Text(toDoList[index].itemName),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
