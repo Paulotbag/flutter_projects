@@ -1,4 +1,4 @@
-//code for lab 8
+//code for lab week 9 - layout
 import 'package:flutter/material.dart';
 import 'package:test_flutter/ToDoDatabase.dart';
 
@@ -38,6 +38,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late TextEditingController _controller;
   late ToDoDAO myDAO;
+  ToDoItem? selectedItem; //means nuable
   List<ToDoItem> toDoList = []; //the list of String in our ToDopage became list of ToDoItem
 
 
@@ -79,19 +80,19 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _removeToDoItem(int index) {
+  void _removeToDoItem(ToDoItem item) {
     setState(() {
       //also delete from DAO
-      myDAO.deleteToDo(toDoList[index]);
+      myDAO.deleteToDo(item);
 
       //delete from list variable
-      toDoList.removeAt(index);
+      toDoList.remove(item);
 
 
     });
   }
 
-  void _showDeleteDialog(int index) {
+  void _showDeleteDialog(ToDoItem item) {
     showDialog<String>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -100,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              _removeToDoItem(index);
+              _removeToDoItem(item);
               Navigator.pop(context);
             },
             child: const Text('Yes'),
@@ -116,65 +117,142 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Widget ToDoList()
+  {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton(
+                child: const Text("Add"),
+                onPressed: _addToDoItem,
+              ),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: "Enter a todo item",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: toDoList.isEmpty ?
+          const Center(
+            child: Text("There are no items in the list"),
+          )
+              :ListView.builder(
+              itemCount: toDoList.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onLongPress: () {
+                    _showDeleteDialog(toDoList[index]); // Show delete dialog on long press
+                  },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text("Row number: ${toDoList[index].id}"),
+                      Text(toDoList[index].itemName),
+
+                    ],
+                  ), //row
+                ),
+                onTap: (){
+                  setState(() {
+                    selectedItem = toDoList[index]; //set selectedItem to a ToDoItem
+                  });
+
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget DetailsPage()
+  {
+    if(selectedItem == null)
+    return Text("nothing is selected"); //something that returns
+    else
+      {
+        return Column(
+          children: [
+            Text("ID: ${selectedItem!.id}"),
+            Text("Name: ${selectedItem!.itemName}"),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _removeToDoItem(selectedItem!);
+                  selectedItem = null;
+                });
+              },
+              child: const Text("Delete"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  selectedItem = null;
+                });
+              },
+              child: const Text("Go Back"),
+            ),
+          ],
+        );
+      }
+  }
+
+  Widget responsiveLayout()
+  {
+    var size = MediaQuery.of(context).size;
+    var height = size.height;
+    var width = size.width;
+
+    if( (width>height) && (width > 720)) //landscape mode
+    {
+        return Row(children: [
+          Expanded(flex:1, child:ToDoList()),
+          Expanded(flex:2, child:DetailsPage()) ]);
+    }
+
+    else // portrait mode
+      {
+        if(selectedItem == null)
+        return ToDoList(); //nothing was selected
+      else
+        return DetailsPage(); //show the details
+      }
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+          actions: [
+            OutlinedButton(onPressed: () {
+              setState(() {
+                selectedItem = null;
+              });
+            }, child:Text("Go Back"))],
         backgroundColor: Theme.of(context).colorScheme.secondary,
         title: Text(widget.title),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  child: const Text("Add"),
-                  onPressed: _addToDoItem,
-                ),
-                Flexible(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: "Enter a todo item",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: toDoList.isEmpty ?
-            const Center(
-              child: Text("There are no items in the list"),
-            )
-                :ListView.builder(
-              itemCount: toDoList.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onLongPress: () => _showDeleteDialog(index),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Text("Row number: ${toDoList[index].id}"),
-                        Text(toDoList[index].itemName),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      body:
+      responsiveLayout()
+
     );
   }
 }
