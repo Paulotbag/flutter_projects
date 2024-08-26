@@ -11,11 +11,11 @@ In Week 5, I created a second page for my app called ProfilePage, navigating to 
 Week 6:
 Week 6 introduces the creation of a "To Do" list application. I implemented a ListView where users could add and delete items through a text field and long-press gesture. This activity enhanced my understanding of list management and user interaction in Flutter.
 
-Week 7:
-In Week 7, I extended the "To Do" list application by integrating database functionality. Items added to the list were stored in a database, and upon restarting the app, the list was repopulated from the database. This work emphasized the importance of persistent data storage in mobile applications.
-
 Week 8:
-Week 8 focused on responsive layouts. I modified the "To Do" list application to show item details on a separate page or pane, depending on the device's orientation. This work reinforced my understanding of responsive design, ensuring that my app provides an optimal user experience across different devices and screen sizes.
+In Week 8, I extended the "To Do" list application by integrating database functionality. Items added to the list were stored in a database, and upon restarting the app, the list was repopulated from the database. This work emphasized the importance of persistent data storage in mobile applications.
+
+Week 9:
+Week 9 focused on responsive layouts. I modified the "To Do" list application to show item details on a separate page or pane, depending on the device's orientation. This work reinforced my understanding of responsive design, ensuring that my app provides an optimal user experience across different devices and screen sizes.
 
 
 # test_flutter
